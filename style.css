@@ -1,0 +1,157 @@
+/* 모든 요소의 크기 계산 방식을 통일 */
+* {
+    box-sizing: border-box;
+}
+
+/* 페이지 전체 */
+body {
+    margin: 0;
+    color: #2b2b2b;
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    background-color: #f7f7f9;
+}
+
+/* 페이지 전체 너비 */
+header,
+main,
+footer {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding-left: 24px;
+    padding-right: 24px;
+}
+
+/* 상단 영역 */
+header {
+    padding-top: 60px;
+    padding-bottom: 40px;
+}
+
+header h1 {
+    margin: 0 0 10px;
+    font-size: 42px;
+    color: #c62828;
+}
+
+header p {
+    margin-bottom: 24px;
+    font-size: 18px;
+    color: #666666;
+}
+
+/* 메뉴 */
+nav {
+    display: flex;
+    gap: 12px;
+}
+
+nav a {
+    padding: 10px 14px;
+    color: #333333;
+    font-weight: bold;
+    text-decoration: none;
+    border-radius: 8px;
+}
+
+nav a:hover {
+    color: #ffffff;
+    background-color: #c62828;
+}
+
+/* 각 콘텐츠 영역 */
+section {
+    margin-bottom: 24px;
+    padding: 32px;
+
+    background-color: #ffffff;
+    border: 1px solid #dddddd;
+    border-radius: 16px;
+}
+
+section h2 {
+    margin-top: 0;
+    color: #c62828;
+}
+
+/* 캐릭터 이미지 */
+#about img {
+    display: block;
+    max-width: 100%;
+    margin-top: 24px;
+
+    border: 1px solid #dddddd;
+    border-radius: 12px;
+}
+
+/* 주요 기능 */
+#features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+#features h2 {
+    width: 100%;
+}
+
+#features article {
+    flex: 1;
+
+    padding: 20px;
+    background-color: #fff5f5;
+
+    border: 1px solid #f0cccc;
+    border-radius: 12px;
+}
+
+#features article h3 {
+    margin-top: 0;
+}
+
+/* 이용 방법 */
+#guide li {
+    margin-bottom: 10px;
+}
+
+/* 제작 신청 */
+#request label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+#request input {
+    padding: 12px;
+    width: 300px;
+
+    border: 1px solid #bbbbbb;
+    border-radius: 8px;
+}
+
+#request button {
+    margin-left: 8px;
+    padding: 12px 18px;
+
+    color: white;
+    font-weight: bold;
+
+    background-color: #c62828;
+    border: none;
+    border-radius: 8px;
+
+    cursor: pointer;
+}
+
+#request button:hover {
+    background-color: #9f1f1f;
+}
+
+/* 하단 영역 */
+footer {
+    padding-top: 20px;
+    padding-bottom: 40px;
+
+    color: #777777;
+    text-align: center;
+}
