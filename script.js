@@ -329,7 +329,8 @@ console.log("Virtual Character Studio - 9주차 폼 검증 및 제출 처리 연
 // ======================================================
 const HISTORY_KEY = "virtual-character-studio-midterm-history-v1";
 const historySearch = document.querySelector("#historySearch");
-const historyFilter = document.querySelector("#historyFilter");
+const historyFilters = document.querySelectorAll(".history-filter");
+let activeHistoryFilter = "all";
 const historyList = document.querySelector("#historyList");
 const historyFeedback = document.querySelector("#historyFeedback");
 const historyEmpty = document.querySelector("#historyEmpty");
@@ -383,7 +384,7 @@ function saveCompletedHistory(name, usage, note) {
     historyRecords = historyRecords.slice(0, 30);
     persistHistory();
     historySearch.value = "";
-    historyFilter.value = "all";
+    setActiveHistoryFilter("all");
     selectedHistoryId = null;
     setHistoryFeedback("'" + name + "' 신청 체험이 내역에 추가됐어요. 상세 보기나 취소를 선택할 수 있습니다.", "success");
     renderHistory();
@@ -407,7 +408,7 @@ function renderHistoryDetail() {
 
 function renderHistory() {
     const query = historySearch.value.trim().toLocaleLowerCase("ko-KR");
-    const filter = historyFilter.value;
+    const filter = activeHistoryFilter;
     const filtered = historyRecords.filter(function (item) {
         const matchesName = item.name.toLocaleLowerCase("ko-KR").includes(query);
         const matchesStatus = filter === "all" || item.status === filter;
@@ -415,12 +416,18 @@ function renderHistory() {
     });
 
     historyList.replaceChildren();
-    historyCount.textContent = "전체 " + historyRecords.length + "건";
+    historyCount.textContent = "표시 " + filtered.length + "건 / 전체 " + historyRecords.length + "건";
     historyEmpty.hidden = filtered.length !== 0;
     if (filtered.length === 0) {
-        historyEmpty.textContent = historyRecords.length === 0
-            ? "저장된 신청 내역이 없습니다. 위의 '제작 신청'을 먼저 체험해 보세요."
-            : "조건에 맞는 결과가 없습니다. 검색어를 바꾸거나 '검색 초기화'를 눌러 주세요.";
+        if (historyRecords.length === 0) {
+            historyEmpty.textContent = "아직 저장된 신청 내역이 없습니다. '제작 신청'에서 신청 체험을 완료해 보세요.";
+        } else if (query && filter !== "all") {
+            historyEmpty.textContent = "검색어와 선택한 상태에 맞는 결과가 없습니다. 검색어 또는 상태 필터를 변경해 주세요.";
+        } else if (query) {
+            historyEmpty.textContent = "검색어에 맞는 결과가 없습니다. 다른 캐릭터 이름으로 검색하거나 '검색 초기화'를 눌러 주세요.";
+        } else {
+            historyEmpty.textContent = "선택한 상태의 신청 내역이 없습니다. '전체'를 선택하면 다른 상태의 기록을 볼 수 있습니다.";
+        }
     }
 
     filtered.forEach(function (record) {
@@ -456,6 +463,7 @@ function renderHistory() {
         row.append(info, actions);
         historyList.append(row);
     });
+    if (selectedHistoryId && !filtered.some(function (record) { return record.id === selectedHistoryId; })) selectedHistoryId = null;
     renderHistoryDetail();
 }
 
@@ -482,14 +490,25 @@ historySearch.addEventListener("input", function () {
     setHistoryFeedback("검색 조건에 따라 신청 내역을 표시합니다.");
     renderHistory();
 });
-historyFilter.addEventListener("change", function () {
-    setHistoryFeedback("선택한 상태의 신청 내역을 표시합니다.");
-    renderHistory();
+function setActiveHistoryFilter(value) {
+    activeHistoryFilter = value;
+    historyFilters.forEach(function (button) {
+        const active = button.dataset.filter === value;
+        button.classList.toggle("is-active", active);
+        button.setAttribute("aria-pressed", String(active));
+    });
+}
+historyFilters.forEach(function (button) {
+    button.addEventListener("click", function () {
+        setActiveHistoryFilter(button.dataset.filter);
+        setHistoryFeedback("'" + button.textContent.trim() + "' 상태의 신청 내역을 표시합니다.");
+        renderHistory();
+    });
 });
 historyList.addEventListener("click", handleHistoryAction);
 document.querySelector("#historyClear").addEventListener("click", function () {
     historySearch.value = "";
-    historyFilter.value = "all";
+    setActiveHistoryFilter("all");
     setHistoryFeedback("검색 조건을 초기화했습니다. 전체 내역을 보여줍니다.", "success");
     renderHistory();
 });
@@ -502,3 +521,94 @@ document.querySelector("#closeDetail").addEventListener("click", function () {
 // 페이지를 새로 열어도 브라우저에 저장된 내역을 다시 렌더링합니다.
 renderHistory();
 console.log("Virtual Character Studio - 중간고사 신청 내역 기능 연결 완료");
+
+
+// ======================================================
+// 10주차: nav + 목록 메뉴 / 현재 위치(aria-current) / 모바일 토글
+// ======================================================
+const menuToggle = document.querySelector("#menuToggle");
+const primaryNav = document.querySelector("#primaryNav");
+const primaryLinks = Array.from(primaryNav.querySelectorAll("a[href^='#']"));
+const menuSections = primaryLinks.map(function (link) {
+    return document.getElementById(link.getAttribute("href").slice(1));
+}).filter(Boolean);
+const mobileMenuMedia = window.matchMedia("(max-width: 768px)");
+let scrollQueued = false;
+
+function setMenuOpen(open) {
+    const actuallyOpen = Boolean(open && mobileMenuMedia.matches);
+    primaryNav.classList.toggle("is-open", actuallyOpen);
+    menuToggle.setAttribute("aria-expanded", String(actuallyOpen));
+    menuToggle.textContent = actuallyOpen ? "메뉴 닫기" : "메뉴 열기";
+}
+
+function setCurrentMenu(sectionId) {
+    primaryLinks.forEach(function (link) {
+        const current = link.getAttribute("href") === "#" + sectionId;
+        link.classList.toggle("is-current", current);
+        if (current) link.setAttribute("aria-current", "location");
+        else link.removeAttribute("aria-current");
+    });
+}
+
+// 스크롤로 방문한 섹션도 현재 위치로 표시합니다.
+function syncMenuFromViewport() {
+    let current = menuSections.length ? menuSections[0].id : "about";
+    const threshold = Math.min(180, window.innerHeight * 0.35);
+    menuSections.forEach(function (section) {
+        if (section.getBoundingClientRect().top <= threshold) current = section.id;
+    });
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 8 && menuSections.length) {
+        current = menuSections[menuSections.length - 1].id;
+    }
+    setCurrentMenu(current);
+}
+function queueViewportSync() {
+    if (scrollQueued) return;
+    scrollQueued = true;
+    window.requestAnimationFrame(function () {
+        scrollQueued = false;
+        syncMenuFromViewport();
+    });
+}
+function syncFromLocation() {
+    const hashId = decodeURIComponent(window.location.hash.slice(1));
+    const matching = menuSections.find(function (section) { return section.id === hashId; });
+    if (matching) setCurrentMenu(matching.id);
+    else queueViewportSync();
+    setMenuOpen(false);
+    // 브라우저의 앵커 이동 및 뒤로 가기 스크롤 복원을 반영합니다.
+    window.requestAnimationFrame(queueViewportSync);
+}
+
+menuToggle.addEventListener("click", function () {
+    setMenuOpen(menuToggle.getAttribute("aria-expanded") !== "true");
+});
+primaryLinks.forEach(function (link) {
+    link.addEventListener("click", function () {
+        setCurrentMenu(link.getAttribute("href").slice(1));
+        setMenuOpen(false);
+    });
+});
+window.addEventListener("hashchange", syncFromLocation);
+window.addEventListener("popstate", syncFromLocation);
+window.addEventListener("scroll", queueViewportSync, { passive: true });
+window.addEventListener("resize", function () {
+    if (!mobileMenuMedia.matches) setMenuOpen(false);
+    queueViewportSync();
+});
+function initializeNavigation() {
+    const hashId = decodeURIComponent(window.location.hash.slice(1));
+    const target = menuSections.find(function (section) { return section.id === hashId; });
+    if (target) {
+        // 새로고침 시에도 URL의 위치와 실제 보이는 섹션을 일치시킵니다.
+        target.scrollIntoView({ behavior: "instant", block: "start" });
+        setCurrentMenu(target.id);
+    } else {
+        syncMenuFromViewport();
+    }
+    setMenuOpen(false);
+}
+window.addEventListener("load", initializeNavigation);
+window.requestAnimationFrame(initializeNavigation);
+console.log("Virtual Character Studio - 10주차 탐색/모바일 메뉴/상태 필터 연결 완료");

@@ -167,3 +167,41 @@ button.button-secondary:hover, a.button-link:hover { background: #f4f4f4; }
 
 /* 시험용 실패 체크박스 레이블은 가로 정렬을 유지 */
 .flow-step .test-mode-label { display: flex; align-items: flex-start; }
+
+
+/* ==========================================================
+   10주차: 내비게이션 / 현재 위치 / 상태 필터 / 모바일 메뉴
+   ========================================================== */
+/* 기존 nav a 스타일은 유지하고 목록형 내비게이션으로 구성합니다. */
+.menu-toggle { display: none; padding: 11px 15px; border: 1px solid #d6b5b5; border-radius: 8px; background: #fff; color: #a12222; font: inherit; font-weight: bold; cursor: pointer; }
+.site-nav { display: block; }
+.site-nav .primary-menu { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; list-style: none; margin: 0; padding: 0; }
+.site-nav .primary-menu li { margin: 0; }
+.site-nav .primary-menu a { display: block; padding: 10px 14px; border-radius: 8px; text-decoration: none; font-weight: bold; color: #333; }
+.site-nav .primary-menu a:hover { color: #fff; background: #c62828; }
+.site-nav .primary-menu a[aria-current="location"], .site-nav .primary-menu a.is-current { background: #c62828; color: #fff; }
+.site-nav .primary-menu a:focus-visible, .menu-toggle:focus-visible, .history-filter:focus-visible { outline: 3px solid #f0b4b4; outline-offset: 2px; }
+
+.history-filter-group { margin: 0; padding: 0; border: 0; min-width: 0; }
+.history-filter-group legend { padding: 0 0 8px; font-weight: bold; }
+.filter-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+.history-filter { flex: 1; min-width: 0; padding: 12px 14px; border: 1px solid #d6b5b5; border-radius: 8px; background: #fff; color: #a12222; font: inherit; font-weight: bold; cursor: pointer; }
+.history-filter:hover { background: #fff0f0; }
+.history-filter.is-active, .history-filter[aria-pressed="true"] { background: #c62828; border-color: #c62828; color: #fff; }
+.history-filter.is-active:hover { background: #9f1f1f; }
+.history-counter { white-space: normal; }
+
+@media (max-width: 768px) {
+    .menu-toggle { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; margin-bottom: 10px; }
+    .site-nav { display: none; width: 100%; }
+    .site-nav.is-open { display: block; }
+    .site-nav .primary-menu { flex-direction: column; align-items: stretch; gap: 6px; padding: 6px 0 12px; }
+    .site-nav .primary-menu li, .site-nav .primary-menu a { width: 100%; }
+    .site-nav .primary-menu a { padding: 12px 14px; }
+    .filter-buttons { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .history-filter { width: 100%; }
+}
+@media (max-width: 390px) {
+    .filter-buttons { gap: 5px; }
+    .history-filter { padding: 11px 8px; }
+}

@@ -17,12 +17,16 @@
     <header>
         <h1>Virtual Character Studio</h1>
         <p class="header-description">나만의 버추얼 캐릭터를 만들고 실시간으로 만나보세요.</p>
-        <nav aria-label="주요 메뉴">
-            <a href="#about">서비스 소개</a>
-            <a href="#features">주요 기능</a>
-            <a href="#guide">이용 방법</a>
-            <a href="#request">제작 신청</a>
-            <a href="#history">신청 내역</a>
+        <!-- 10주차: nav + ul/li, 현재 위치 및 모바일 메뉴 -->
+        <button id="menuToggle" class="menu-toggle" type="button" aria-expanded="false" aria-controls="primaryNav">메뉴 열기</button>
+        <nav id="primaryNav" class="site-nav" aria-label="주요 메뉴">
+            <ul class="primary-menu">
+                <li><a href="#about" aria-current="location">서비스 소개</a></li>
+                <li><a href="#features">주요 기능</a></li>
+                <li><a href="#guide">이용 방법</a></li>
+                <li><a href="#request">제작 신청</a></li>
+                <li><a href="#history">신청 내역</a></li>
+            </ul>
         </nav>
     </header>
 
@@ -192,11 +196,11 @@
         <section id="history" aria-labelledby="historyTitle">
             <div class="history-heading">
                 <div>
-                    <p class="eyebrow">MIDTERM · NEW FEATURE</p>
+                    <p class="eyebrow">WEEK 10 · HISTORY NAVIGATION</p>
                     <h2 id="historyTitle">내 신청 내역</h2>
                     <p>완료한 캐릭터 신청 체험을 찾아보고, 상세 정보를 다시 열거나 취소할 수 있습니다.</p>
                 </div>
-                <span class="history-counter" id="historyCount" aria-live="polite">전체 0건</span>
+                <span class="history-counter" id="historyCount" aria-live="polite">표시 0건 / 전체 0건</span>
             </div>
             <p class="demo-notice">브라우저에만 저장되는 과제용 시연 기록입니다. 실제 신청 및 취소는 처리되지 않습니다.</p>
 
@@ -205,14 +209,15 @@
                     <label for="historySearch">캐릭터 이름 검색</label>
                     <input type="search" id="historySearch" placeholder="예: 루묭" autocomplete="off">
                 </div>
-                <div class="history-field">
-                    <label for="historyFilter">상태별 보기</label>
-                    <select id="historyFilter">
-                        <option value="all">전체 상태</option>
-                        <option value="active">완료</option>
-                        <option value="cancelled">취소</option>
-                    </select>
-                </div>
+                <!-- 10주차: 선택 상태가 aria-pressed와 목록에 함께 반영되는 버튼 필터 -->
+                <fieldset class="history-filter-group">
+                    <legend>상태별 보기</legend>
+                    <div class="filter-buttons" aria-label="신청 내역 상태 필터">
+                        <button type="button" class="history-filter is-active" data-filter="all" aria-pressed="true">전체</button>
+                        <button type="button" class="history-filter" data-filter="active" aria-pressed="false">완료</button>
+                        <button type="button" class="history-filter" data-filter="cancelled" aria-pressed="false">취소</button>
+                    </div>
+                </fieldset>
                 <button type="button" class="button-secondary history-clear" id="historyClear">검색 초기화</button>
             </div>
 
