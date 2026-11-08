@@ -10,7 +10,7 @@
     <!--
     주요 사용자: 버추얼 캐릭터 제작에 관심 있는 사용자
     목적: 제작 기능을 알아보고 제작 신청 과정을 체험한다.
-    핵심 행동: 캐릭터 신청 체험 완료 → 신청 내역 조회·검색·취소
+    핵심 행동: 이름·활용 목적·선택적 추가 요청 작성 → 시연 신청 완료 → 내역 조회·검색·취소
     정보 순서: 소개 → 주요 기능 → 이용 방법 → 제작 신청 → 신청 내역
     완료 조건: 완료 화면에 도달한 뒤 저장된 신청 내역을 확인할 수 있다.
     -->
@@ -76,8 +76,9 @@
             <h2>이용 방법</h2>
             <ol>
                 <li>제작 신청 시작 버튼을 누릅니다.</li>
-                <li>캐릭터 이름을 입력하고 활용 목적을 선택합니다.</li>
-                <li>입력한 정보를 확인한 다음 신청을 확정합니다.</li>
+                <li>캐릭터 이름(2~20자)을 입력하고 활용 목적을 선택합니다.</li>
+                <li>필요하다면 추가 제작 요청을 체크하고 요청사항(8자 이상)을 적습니다.</li>
+                <li>입력한 내용을 확인하고, 제출 중 상태와 성공·실패 안내를 확인합니다.</li>
                 <li>완료된 시연 신청은 '내 신청 내역'에서 다시 확인하거나 취소할 수 있습니다.</li>
             </ol>
         </section>
@@ -85,6 +86,7 @@
         <!-- 7주차: 시작 → 입력 → 선택 → 확인 → 완료 (5단계) -->
         <section id="request">
             <h2>캐릭터 제작 신청</h2>
+            <p class="week9-notice">9주차 개선: 조건부 요청사항 · 실시간 검증 · 제출 중 상태 · 실패 후 재시도</p>
             <p class="demo-notice">수업 과제용 시연 기능입니다. 실제 신청이 접수되거나 서버로 전송되지는 않습니다.</p>
             <p class="flow-progress" id="flowProgress" aria-live="polite">1 / 5 · 시작</p>
 
@@ -100,9 +102,10 @@
             <!-- 2단계: 이름 입력 + input 이벤트 -->
             <div class="flow-step" data-step="1" id="step-name" hidden>
                 <h3>캐릭터 이름 입력</h3>
-                <label for="characterName">캐릭터 이름 <span class="required">(필수)</span></label>
-                <input type="text" id="characterName" maxlength="20" placeholder="예: 루묭" aria-describedby="nameCount nameError">
+                <label for="characterName">캐릭터 이름 <span class="required">(필수 · 2~20자)</span></label>
+                <input type="text" id="characterName" minlength="2" maxlength="20" placeholder="예: 루묭" aria-describedby="nameCount nameStatus nameError">
                 <p class="helper" id="nameCount" aria-live="polite">0 / 20자</p>
+                <p class="input-feedback" id="nameStatus" aria-live="polite">이름을 2글자 이상 입력해 주세요.</p>
                 <p class="name-preview" id="namePreview">캐릭터 이름 미리보기: 미입력</p>
                 <p class="field-error" id="nameError" role="alert"></p>
                 <div class="flow-actions">
@@ -123,6 +126,20 @@
                 </select>
                 <p class="field-error" id="usageError" role="alert"></p>
 
+                <!-- 9주차: 체크박스에 따라 나타나는 조건부 입력 영역 -->
+                <label class="agree-row" for="requestMoreCheck">
+                    <input type="checkbox" id="requestMoreCheck" aria-controls="requestMoreField">
+                    <span>추가 제작 요청이 있어요. (선택)</span>
+                </label>
+                <div class="conditional-field" id="requestMoreField" hidden>
+                    <label for="requestMoreText">추가 제작 요청 사항 <span class="required">(선택 시 필수 · 최소 8자)</span></label>
+                    <p class="helper" id="requestMoreHelp">표정, 의상, 방송 연동 등 원하는 작업을 구체적으로 적어주세요.</p>
+                    <textarea id="requestMoreText" rows="4" maxlength="150" placeholder="예: ARKit 표정 52개를 자연스럽게 설정하고 싶어요." aria-describedby="requestMoreHelp requestMoreCount requestMoreFeedback requestMoreError" disabled></textarea>
+                    <p class="helper" id="requestMoreCount" aria-live="polite">0 / 150자</p>
+                    <p class="input-feedback" id="requestMoreFeedback" aria-live="polite">8자 이상 작성해 주세요.</p>
+                    <p class="field-error" id="requestMoreError" role="alert"></p>
+                </div>
+
                 <label class="agree-row" for="agreeCheck">
                     <input type="checkbox" id="agreeCheck">
                     <span>과제용 시연이며 실제 신청은 접수되지 않는다는 안내를 확인했습니다. <span class="required">(필수)</span></span>
@@ -142,14 +159,20 @@
                 <dl class="summary-list">
                     <div><dt>캐릭터 이름</dt><dd id="summaryName">-</dd></div>
                     <div><dt>활용 목적</dt><dd id="summaryUsage">-</dd></div>
+                    <div><dt>추가 제작 요청</dt><dd id="summaryMore">없음</dd></div>
                     <div><dt>안내 확인</dt><dd id="summaryAgree">-</dd></div>
                 </dl>
-                <form id="request-form">
+                <form id="request-form" novalidate>
+                    <label class="test-mode-label" for="simulateFailureCheck">
+                        <input type="checkbox" id="simulateFailureCheck">
+                        <span>과제 테스트: 이번 제출을 한 번 실패시키기 (입력 유지·재시도 확인용)</span>
+                    </label>
                     <div class="flow-actions">
                         <button type="button" class="button-secondary" id="backToOptions">이전 · 수정하기</button>
                         <button type="submit" id="requestButton" disabled>신청 확정하기</button>
                     </div>
                 </form>
+                <p class="submit-status" id="submitStatus" role="status" aria-live="polite"></p>
                 <p class="field-error" id="requestError" role="alert"></p>
             </div>
 
@@ -202,6 +225,7 @@
                 <dl class="summary-list">
                     <div><dt>캐릭터 이름</dt><dd id="detailName">-</dd></div>
                     <div><dt>활용 목적</dt><dd id="detailUsage">-</dd></div>
+                    <div><dt>추가 제작 요청</dt><dd id="detailNote">없음</dd></div>
                     <div><dt>진행 상태</dt><dd id="detailStatus">-</dd></div>
                     <div><dt>저장 시각</dt><dd id="detailDate">-</dd></div>
                 </dl>

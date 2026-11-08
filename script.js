@@ -37,9 +37,17 @@ const flowProgress = document.querySelector("#flowProgress");
 const characterNameInput = document.querySelector("#characterName");
 const nameCount = document.querySelector("#nameCount");
 const namePreview = document.querySelector("#namePreview");
+const nameStatus = document.querySelector("#nameStatus");
 const nameError = document.querySelector("#nameError");
 const usageType = document.querySelector("#usageType");
 const usageError = document.querySelector("#usageError");
+// 9주차 선택에 따라 입력 가능 여부가 바뀌는 추가 제작 요청
+const requestMoreCheck = document.querySelector("#requestMoreCheck");
+const requestMoreField = document.querySelector("#requestMoreField");
+const requestMoreText = document.querySelector("#requestMoreText");
+const requestMoreCount = document.querySelector("#requestMoreCount");
+const requestMoreFeedback = document.querySelector("#requestMoreFeedback");
+const requestMoreError = document.querySelector("#requestMoreError");
 const agreeCheck = document.querySelector("#agreeCheck");
 const agreeMessage = document.querySelector("#agreeMessage");
 const agreeError = document.querySelector("#agreeError");
@@ -49,8 +57,12 @@ const requestButton = document.querySelector("#requestButton");
 const requestError = document.querySelector("#requestError");
 const summaryName = document.querySelector("#summaryName");
 const summaryUsage = document.querySelector("#summaryUsage");
+const summaryMore = document.querySelector("#summaryMore");
 const summaryAgree = document.querySelector("#summaryAgree");
 const completeMessage = document.querySelector("#completeMessage");
+const simulateFailureCheck = document.querySelector("#simulateFailureCheck");
+const submitStatus = document.querySelector("#submitStatus");
+const backToOptionsButton = document.querySelector("#backToOptions");
 
 const purposeLabels = {
     stream: "실시간 버추얼 방송",
@@ -60,6 +72,7 @@ const purposeLabels = {
 const stepLabels = ["시작", "이름 입력", "활용 목적 선택", "내용 확인", "완료"];
 let currentStep = 0;
 let isRequested = false;
+let isSubmitting = false;
 
 function showStep(step) {
     currentStep = step;
@@ -80,36 +93,70 @@ function setError(element, input, message) {
     }
 }
 
-// 6주차 input 이벤트 유지: 글자 수와 이름 미리보기를 즉시 변경합니다.
+// 6주차 input 이벤트 유지 + 9주차 최소 2자 실시간 검증
 function handleNameInput() {
     const name = characterNameInput.value.trim();
+    const valid = name.length >= 2 && name.length <= 20;
     nameCount.textContent = characterNameInput.value.length + " / 20자";
     namePreview.textContent = "캐릭터 이름 미리보기: " + (name || "미입력");
     namePreview.classList.toggle("has-value", name !== "");
-    if (name !== "") clearError(nameError, characterNameInput);
+    nameStatus.textContent = valid ? "사용 가능한 캐릭터 이름입니다." : "캐릭터 이름은 2~20자로 입력해 주세요.";
+    nameStatus.classList.toggle("is-valid", valid);
+    nameStatus.classList.toggle("is-invalid", !valid && name.length > 0);
+    if (valid) clearError(nameError, characterNameInput);
+    else if (nameError.textContent) nameError.textContent = "이름을 2~20자로 수정해 주세요.";
     updateReadiness();
 }
 
 function validName() {
-    if (characterNameInput.value.trim() !== "") {
+    const name = characterNameInput.value.trim();
+    if (name.length >= 2 && name.length <= 20) {
         clearError(nameError, characterNameInput);
         return true;
     }
-    setError(nameError, characterNameInput, "캐릭터 이름을 입력해 주세요. 최대 20자까지 가능합니다.");
+    setError(nameError, characterNameInput, name === "" ? "캐릭터 이름을 입력해 주세요. 최소 2자입니다." : "캐릭터 이름은 2~20자로 입력해 주세요.");
     return false;
 }
 
-// 6주차 change 이벤트 유지: 선택에 맞춰 문구·스타일·버튼 상태를 변경합니다.
+// 9주차: 추가 요청 체크박스가 꺼져 있으면 입력창을 숨기고 disabled로 만듭니다.
+function updateExtraFeedback() {
+    const text = requestMoreText.value.trim();
+    const valid = text.length >= 8 && text.length <= 150;
+    requestMoreCount.textContent = requestMoreText.value.length + " / 150자";
+    requestMoreFeedback.textContent = valid ? "추가 요청 조건을 충족했습니다." : "추가 요청 사항은 8자 이상 입력해 주세요.";
+    requestMoreFeedback.classList.toggle("is-valid", valid && requestMoreCheck.checked);
+    requestMoreFeedback.classList.toggle("is-invalid", !valid && text.length > 0 && requestMoreCheck.checked);
+    if (valid) clearError(requestMoreError, requestMoreText);
+    else if (requestMoreError.textContent) requestMoreError.textContent = "추가 요청 사항을 8자 이상 작성해 주세요.";
+    updateReadiness();
+}
+
+function handleMoreChange() {
+    const enabled = requestMoreCheck.checked;
+    requestMoreField.hidden = !enabled;
+    requestMoreText.disabled = !enabled;
+    requestMoreText.required = enabled;
+    if (!enabled) clearError(requestMoreError, requestMoreText);
+    updateExtraFeedback();
+}
+
+function isFlowReady() {
+    const name = characterNameInput.value.trim();
+    const extraReady = !requestMoreCheck.checked || (requestMoreText.value.trim().length >= 8 && requestMoreText.value.trim().length <= 150);
+    return agreeCheck.checked && usageType.value !== "" && name.length >= 2 && name.length <= 20 && extraReady;
+}
+
+// 6주차 change 이벤트 유지: 문구·스타일·버튼 상태 함께 변경
 function updateReadiness() {
     const agreed = agreeCheck.checked;
-    const ready = agreed && usageType.value !== "" && characterNameInput.value.trim() !== "";
+    const ready = isFlowReady();
     agreeMessage.textContent = agreed
-        ? "안내를 확인했습니다. 활용 목적을 선택한 뒤 내용을 확인해 주세요."
+        ? "안내를 확인했습니다. 필수 항목을 작성한 뒤 내용을 확인해 주세요."
         : "안내를 확인해야 다음 단계로 이동할 수 있습니다.";
     agreeMessage.classList.toggle("is-ready", agreed);
     nextOptions.classList.toggle("is-ready", ready);
     nextOptions.textContent = ready ? "선택 완료 · 내용 확인하기" : "내용 확인하기";
-    requestButton.disabled = !ready || isRequested;
+    requestButton.disabled = !ready || isRequested || isSubmitting;
 }
 
 function handleUsageChange() {
@@ -128,6 +175,11 @@ function validOptions() {
         return false;
     }
     clearError(usageError, usageType);
+    if (requestMoreCheck.checked && requestMoreText.value.trim().length < 8) {
+        setError(requestMoreError, requestMoreText, "추가 제작 요청은 최소 8자 이상 입력해 주세요.");
+        return false;
+    }
+    clearError(requestMoreError, requestMoreText);
     if (!agreeCheck.checked) {
         setError(agreeError, null, "시연 안내를 확인하고 체크박스를 선택해 주세요.");
         agreeCheck.focus();
@@ -140,6 +192,7 @@ function validOptions() {
 function showSummary() {
     summaryName.textContent = characterNameInput.value.trim();
     summaryUsage.textContent = purposeLabels[usageType.value] || "선택되지 않음";
+    summaryMore.textContent = requestMoreCheck.checked ? requestMoreText.value.trim() : "추가 요청 없음";
     summaryAgree.textContent = agreeCheck.checked ? "확인함" : "확인 필요";
 }
 
@@ -172,31 +225,80 @@ document.querySelector("#backToOptions").addEventListener("click", function () {
 characterNameInput.addEventListener("input", handleNameInput);
 usageType.addEventListener("change", handleUsageChange);
 agreeCheck.addEventListener("change", handleAgreeChange);
+requestMoreCheck.addEventListener("change", handleMoreChange);
+requestMoreText.addEventListener("input", updateExtraFeedback);
 
-// 5주차 submit 기능 유지: 최종 확인 후 완료 단계로 이동합니다.
-function handleRequest(event) {
+// 9주차: submit 이벤트에서 유효성 검사 → 처리 중 비활성화 → 성공/실패를 처리합니다.
+// 서버 없이 시연: 사용자가 실패 테스트를 체크한 경우에만 이번 제출을 실패 처리합니다.
+async function handleRequest(event) {
     event.preventDefault();
-    if (isRequested || currentStep !== 3) return;
+    if (isRequested || isSubmitting || currentStep !== 3) return;
     if (!validName()) { showStep(1); return; }
     if (!validOptions()) { showStep(2); return; }
+
+    isSubmitting = true;
     clearError(requestError);
-    isRequested = true;
     requestButton.disabled = true;
-    requestButton.textContent = "신청 완료";
-    completeMessage.textContent = "'" + characterNameInput.value.trim() + "' 캐릭터의 '"
-        + purposeLabels[usageType.value] + "' 활용 신청 체험이 완료되었습니다.";
-    showStep(4);
-    saveCompletedHistory(characterNameInput.value.trim(), usageType.value);
+    backToOptionsButton.disabled = true;
+    requestButton.textContent = "제출 중...";
+    submitStatus.textContent = "시연 신청을 처리하고 있습니다. 중복 제출은 차단됩니다.";
+    submitStatus.classList.add("is-pending");
+    submitStatus.classList.remove("is-failed");
+
+    try {
+        await new Promise(function (resolve) { setTimeout(resolve, 800); });
+        if (simulateFailureCheck.checked) {
+            simulateFailureCheck.checked = false; // 다음 시도는 성공할 수 있게 일회성 실패 처리
+            requestError.textContent = "시연용 제출 실패입니다. 입력값은 유지됐어요. '신청 확정하기'를 다시 눌러 재시도해 주세요.";
+            submitStatus.textContent = "제출에 실패했습니다. 내용을 수정하거나 다시 시도할 수 있습니다.";
+            submitStatus.classList.add("is-failed");
+            return;
+        }
+
+        isRequested = true;
+        completeMessage.textContent = "'" + characterNameInput.value.trim() + "' 캐릭터의 '" + purposeLabels[usageType.value] + "' 활용 신청 체험이 완료되었습니다.";
+        saveCompletedHistory(characterNameInput.value.trim(), usageType.value,
+            requestMoreCheck.checked ? requestMoreText.value.trim() : "");
+        submitStatus.textContent = "";
+        showStep(4);
+    } catch (error) {
+        console.error("시연 신청 처리 오류", error);
+        requestError.textContent = "처리 중 오류가 발생했습니다. 입력값을 유지했으니 다시 시도해 주세요.";
+        submitStatus.textContent = "처리에 실패했습니다. 다시 시도할 수 있습니다.";
+        submitStatus.classList.add("is-failed");
+    } finally {
+        isSubmitting = false;
+        backToOptionsButton.disabled = false;
+        requestButton.textContent = isRequested ? "신청 완료" : "신청 확정하기";
+        requestButton.disabled = isRequested || !isFlowReady();
+        submitStatus.classList.remove("is-pending");
+    }
 }
 requestForm.addEventListener("submit", handleRequest);
 
 // 다시 시작: 이름·선택·동의·오류·미리보기·버튼·단계 모두 초기화합니다.
 function restartFlow() {
     isRequested = false;
+    isSubmitting = false;
     characterNameInput.value = "";
+    requestMoreCheck.checked = false;
+    requestMoreText.value = "";
+    requestMoreText.disabled = true;
+    requestMoreText.required = false;
+    requestMoreField.hidden = true;
+    requestMoreCount.textContent = "0 / 150자";
+    requestMoreFeedback.textContent = "8자 이상 작성해 주세요.";
+    requestMoreFeedback.classList.remove("is-valid", "is-invalid");
+    clearError(requestMoreError, requestMoreText);
+    simulateFailureCheck.checked = false;
+    submitStatus.textContent = "";
+    submitStatus.classList.remove("is-pending", "is-failed");
+    backToOptionsButton.disabled = false;
     usageType.value = "";
     agreeCheck.checked = false;
     nameCount.textContent = "0 / 20자";
+    nameStatus.textContent = "이름을 2글자 이상 입력해 주세요.";
+    nameStatus.classList.remove("is-valid", "is-invalid");
     namePreview.textContent = "캐릭터 이름 미리보기: 미입력";
     namePreview.classList.remove("has-value");
     clearError(nameError, characterNameInput);
@@ -205,6 +307,7 @@ function restartFlow() {
     clearError(requestError);
     summaryName.textContent = "-";
     summaryUsage.textContent = "-";
+    summaryMore.textContent = "없음";
     summaryAgree.textContent = "-";
     completeMessage.textContent = "";
     requestButton.textContent = "신청 확정하기";
@@ -213,8 +316,10 @@ function restartFlow() {
     requestStart.focus();
 }
 document.querySelector("#requestRestart").addEventListener("click", restartFlow);
+handleNameInput();
+handleMoreChange();
 updateReadiness();
-console.log("Virtual Character Studio - 7주차 사용자 흐름 연결 완료");
+console.log("Virtual Character Studio - 9주차 폼 검증 및 제출 처리 연결 완료");
 
 
 // ======================================================
@@ -232,6 +337,7 @@ const historyCount = document.querySelector("#historyCount");
 const historyDetail = document.querySelector("#historyDetail");
 const detailName = document.querySelector("#detailName");
 const detailUsage = document.querySelector("#detailUsage");
+const detailNote = document.querySelector("#detailNote");
 const detailStatus = document.querySelector("#detailStatus");
 const detailDate = document.querySelector("#detailDate");
 let selectedHistoryId = null;
@@ -264,11 +370,12 @@ function setHistoryFeedback(message, type) {
     historyFeedback.classList.toggle("is-error", type === "error");
 }
 
-function saveCompletedHistory(name, usage) {
+function saveCompletedHistory(name, usage, note) {
     const record = {
         id: String(Date.now()) + "-" + Math.random().toString(36).slice(2, 8),
         name: name,
         usage: usage,
+        note: note || "",
         status: "active",
         createdAt: new Date().toISOString()
     };
@@ -292,6 +399,7 @@ function renderHistoryDetail() {
     if (!record) { historyDetail.hidden = true; return; }
     detailName.textContent = record.name;
     detailUsage.textContent = purposeLabels[record.usage];
+    detailNote.textContent = record.note || "추가 요청 없음";
     detailStatus.textContent = record.status === "active" ? "완료" : "취소";
     detailDate.textContent = formatDate(record.createdAt);
     historyDetail.hidden = false;
